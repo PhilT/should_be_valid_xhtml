@@ -12,9 +12,6 @@ In spec/views/users/index.html.haml_spec.rb:
       end
     end
 
-
-
-
 Todo
 ----
 
