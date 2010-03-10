@@ -1,9 +1,11 @@
 should be_valid_xhtml Rails plugin
 ==================================
 
-should be_valid_xhtml is a plugin for RSpec that allows you to validate your XHTML templates using the W3C Validator (http://validator.w3.org). It uses RSpec view tests to enable validation of XHTML fragments. In other words, the template without layout.
+should be_valid_xhtml is a plugin for RSpec that allows you to validate your (X)HTML templates using the W3C Validator (http://validator.w3.org) SOAP web service. It uses RSpec view tests to enable validation of XHTML fragments. In other words, the template without a layout. Validator response is parsed using Nokogiri XML parser.
 
-In spec/views/users/index.html.haml_spec.rb:
+It's simply a matter of setting up any assigns in the view, calling render then checking the response body. Any templating language will work such as HAML (my preference), ERB, etc:
+
+    (In spec/views/users/index.html.haml_spec.rb)
     describe 'users/index.html.haml' do
       it do
         assigns[:users] = [mock_model(User, :name => 'Joe')]
@@ -12,9 +14,24 @@ In spec/views/users/index.html.haml_spec.rb:
       end
     end
 
+Two methods exist for checking XHTML 1.0 Strict and HTML 4.01 Transitional
+    be_valid_xhtml(fragment = true)
+    be_valid_html(fragment = true)
+
+Both accept a parameter for telling the validator whether the content is a fragment or full document. The default is a fragment but to check your layouts you may want some views to validate the whole document. It can be done like this:
+
+    (In spec/views/users/index.html.erb_spec.rb)
+    describe 'users/index.html.erb' do
+      it do
+        assigns[:users] = [mock_model(User, :name => 'Joe')]
+        render 'users/index.html.erb', :layout => 'application'
+        response.body.should be_valid_xhtml(false)
+      end
+    end
+
+
 Todo
 ----
 
 * Add caching to ensure W3C service is not hit unless template has changed
-* Support validation of templates with layout (e.g. render 'users/index.html.haml', :layout => 'application')
 

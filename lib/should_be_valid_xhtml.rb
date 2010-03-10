@@ -1,21 +1,35 @@
 require 'md5'
 
+class Hash
+  def to_s
+    self.map{|key, value| "#{key}=#{value}"}.join('&')
+  end
+end
+
 module CustomValidaterMatchers
   class BeValidXhtml
     MARKUP_VALIDATOR_HOST = 'validator.w3.org'
     MARKUP_VALIDATOR_PATH = '/check'
 
+    def initialize(fragment, doctype)
+      @params = {:output => 'soap12'}
+      @params[:prefill] = '1' if fragment
+      @params[fragment ? :prefill_doctype : :doctype] = doctype
+    end
+
     def matches?(html)
+      @params[:fragment] = CGI.escape(html)
+
       http = Net::HTTP.start(MARKUP_VALIDATOR_HOST)
-      response = http.post2(MARKUP_VALIDATOR_PATH, "fragment=#{CGI.escape(html)}&prefill=1&prefill_doctype=xhtml10")
-      doc = Nokogiri::HTML(response.body)
+      response = http.post2(MARKUP_VALIDATOR_PATH, @params.to_s)
+      doc = Nokogiri::XML(response.body)
       @message = ''
-      doc.css('.msg_err').each do |error|
-        if error.css('.err_type img').first['title'] == 'Error'
-          position = error.css('em').first.text.split("\n").collect{|line|line.strip}.join(' ')
-          message = error.css('.msg').text
-          @message << "#{position}: #{message}\n"
-        end
+      m_namespace = {'m' => 'http://www.w3.org/2005/10/markup-validator'}
+      doc.xpath('//m:error', m_namespace).each do |error|
+        line = error.xpath('m:line', m_namespace).text
+        column = error.xpath('m:col', m_namespace).text
+        message = error.xpath('m:message', m_namespace).text
+        @message << "Line #{line}, Column #{column}: #{message}\n"
       end
       @message.empty?
     end
@@ -31,11 +45,14 @@ module CustomValidaterMatchers
     def description
       "be valid XHTML"
     end
-
   end
 
-  def be_valid_xhtml
-    BeValidXhtml.new
+  def be_valid_xhtml(fragment = true)
+    BeValidXhtml.new(fragment, 'xhtml10')
+  end
+
+  def be_valid_html(fragment = true)
+    BeValidHtml.new(fragment, 'html401')
   end
 
 end
