@@ -1,0 +1,23 @@
+should be_valid_xhtml Rails plugin
+==================================
+
+should be_valid_xhtml is a plugin for RSpec that allows you to validate your XHTML templates using the W3C Validator (http://validator.w3.org). It uses RSpec view tests to enable validation of XHTML fragments. In other words, the template without layout.
+
+In spec/views/users/index.html.haml_spec.rb:
+    describe 'users/index.html.haml' do
+      it do
+        assigns[:users] = [mock_model(User, :name => 'Joe')]
+        render
+        response.body.should be_valid_xhtml
+      end
+    end
+
+
+
+
+Todo
+----
+
+* Add caching to ensure W3C service is not hit unless template has changed
+* Support validation of templates with layout (e.g. render 'users/index.html.haml', :layout => 'application')
+
