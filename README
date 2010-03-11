@@ -1,7 +1,7 @@
 should be_valid_xhtml Rails plugin
 ==================================
 
-should be_valid_xhtml is a plugin for RSpec that allows you to validate your (X)HTML templates using the W3C Validator (http://validator.w3.org) SOAP web service. It uses RSpec view tests to enable validation of XHTML fragments. In other words, the template without a layout. Validator response is parsed using Nokogiri XML parser.
+should be_valid_xhtml is a plugin for RSpec that allows you to validate your (X)HTML templates using the W3C Validator (http://validator.w3.org) SOAP web service. It uses RSpec view tests to enable validation of XHTML fragments. In other words, the template without a layout. Validator response is parsed using Nokogiri XML parser. Responses from the validator are cached so if the template hasn't changed the W3C web service will not be called.
 
 It's simply a matter of setting up any assigns in the view, calling render then checking the response body. Any templating language will work such as HAML (my preference), ERB, etc:
 
@@ -30,8 +30,8 @@ Both accept a parameter for telling the validator whether the content is a fragm
     end
 
 
-Todo
-----
+Credits
+-------
 
-* Add caching to ensure W3C service is not hit unless template has changed
+Thanks to Scott Raymond's original assert_valid_markup and CodeMonkeySteve's assert-valid-asset and the various forks on github.
 

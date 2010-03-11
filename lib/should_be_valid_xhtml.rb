@@ -1,4 +1,5 @@
 require 'md5'
+require 'nokogiri'
 
 class Hash
   def to_s
@@ -18,18 +19,17 @@ module CustomValidaterMatchers
     end
 
     def matches?(html)
-      @params[:fragment] = CGI.escape(html)
+      hash = MD5.hexdigest(html)
 
-      http = Net::HTTP.start(MARKUP_VALIDATOR_HOST)
-      response = http.post2(MARKUP_VALIDATOR_PATH, @params.to_s)
-      doc = Nokogiri::XML(response.body)
-      @message = ''
-      m_namespace = {'m' => 'http://www.w3.org/2005/10/markup-validator'}
-      doc.xpath('//m:error', m_namespace).each do |error|
-        line = error.xpath('m:line', m_namespace).text
-        column = error.xpath('m:col', m_namespace).text
-        message = error.xpath('m:message', m_namespace).text
-        @message << "Line #{line}, Column #{column}: #{message}\n"
+      cache_dir = File.join('tmp', 'should_be_valid_cache')
+      cache_file = File.join(cache_dir, hash)
+      if File.exists?(cache_file)
+        @message = File.read(cache_file)
+      else
+        response_body = validate(html)
+        FileUtils.mkdir_p(cache_dir) unless File.exists?(cache_dir)
+        @message = parse(response_body)
+        File.open(cache_file, "w") {|f| f.write(@message)}
       end
       @message.empty?
     end
@@ -44,6 +44,26 @@ module CustomValidaterMatchers
 
     def description
       "be valid XHTML"
+    end
+
+  private
+    def validate(html)
+      @params[:fragment] = CGI.escape(html)
+      http = Net::HTTP.start(MARKUP_VALIDATOR_HOST)
+      http.post2(MARKUP_VALIDATOR_PATH, @params.to_s).body
+    end
+
+    def parse(response)
+      doc = Nokogiri::XML(response)
+      messages = ''
+      m_namespace = {'m' => 'http://www.w3.org/2005/10/markup-validator'}
+      doc.xpath('//m:error', m_namespace).each do |error|
+        line = error.xpath('m:line', m_namespace).text
+        column = error.xpath('m:col', m_namespace).text
+        message = error.xpath('m:message', m_namespace).text
+        messages << "Line #{line}, Column #{column}: #{message}\n"
+      end
+      messages
     end
   end
 
