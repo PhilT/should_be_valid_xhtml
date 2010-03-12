@@ -15,7 +15,14 @@ Motivation
 Usage
 -----
 
-It's simply a matter of setting up any assigns in the view, calling render then checking the response body. Any templating language will work such as HAML (my preference), ERB, etc:
+should be_valid_xhtml is actually an RSpec Matcher. To let RSpec know about it we need the following in spec_helper:
+
+    Spec::Runner.configure do |config|
+        ...
+        config.include(ValidaterMatchers, :type => :view)
+    end
+
+Then it's simply a matter of setting up any assigns in the view, calling render, then checking the response body. Any templating language will work such as HAML (my preference), ERB, etc:
 
     (In spec/views/users/index.html.haml_spec.rb)
     describe 'users/index.html.haml' do

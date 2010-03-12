@@ -7,7 +7,7 @@ class Hash
   end
 end
 
-module CustomValidaterMatchers
+module ValidaterMatchers
   class BeValidXhtml
     MARKUP_VALIDATOR_HOST = 'validator.w3.org'
     MARKUP_VALIDATOR_PATH = '/check'
